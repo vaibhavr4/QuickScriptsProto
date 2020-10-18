@@ -1,11 +1,25 @@
 import React, {Component} from 'react'
 import Form from "@rjsf/core";
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-github";
+import AppService from "../services/AppService";
+import NumberInput from 'semantic-ui-react-numberinput';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
 export default class SchemaToForm extends Component {
     constructor(props) {
         super(props);
+        this.AppService = AppService.instance;
         this.state= {
-            schema: {
+            formData:{},
+            key: Date.now(),
+            loadFormData:{
+                title: 'Load title',
+                done: true
+            },
+            testSchema: {
                 title: "Form Gen",
                 type: "object",
                 required: ["title"],
@@ -13,25 +27,122 @@ export default class SchemaToForm extends Component {
                     title: {type: "string", title: "Title", default: "A new task"},
                     done: {type: "boolean", title: "Done?", default: false}
                 }
+            },
+            uiSchema : {
+                // title: {
+                //     "ui:widget": (props) => {
+                //         return (
+                //             <AceEditor
+                //                 mode="yaml"
+                //                 theme="github"
+                //                 name="UNIQUE_ID_OF_DIV"
+                //                 value={props.value}
+                //                 editorProps={{ $blockScrolling: true }}
+                //                 setOptions={{
+                //                     enableBasicAutocompletion: true,
+                //                     enableLiveAutocompletion: true,
+                //                     enableSnippets: true
+                //                 }}
+                //                 required={props.required}
+                //                 onChange={(value) => props.onChange(value)}
+                //             />
+                //         );
+                //     }
+                // },
+                layout: {
+                    "ui:widget": (props) => {
+                        return (
+                            <div>
+                                <NumberInput
+                                    onChange={(value) => props.onChange(value)}
+                                    required={props.required}
+                                    value={props.value}
+                                    minValue={1}/>
+                                <Select
+                                    labelId="demo-simple-select-filled-label"
+                                    id="demo-simple-select-filled"
+                                    value={props.value}
+                                    onChange={(value) => props.onChange(value)}>
+                                    <MenuItem value="">
+                                        <em>None</em>
+                                    </MenuItem>
+                                    <MenuItem value="Week">Week</MenuItem>
+                                    <MenuItem value="Day">Day</MenuItem>
+                                    <MenuItem value="Hour">Hour</MenuItem>
+                                    <MenuItem value="Minute">Minute</MenuItem>
+                                    <MenuItem value="Second">Second</MenuItem>
+                            </Select>
+                    </div>
+                        );
+                    }
+                }
             }
         }
+
+        this.sendInput = this.sendInput.bind(this)
+        this.trackChange = this.trackChange.bind(this)
+        this.resetInput = this.resetInput.bind(this)
+        this.loadInput = this.loadInput.bind(this)
+        // this.getUISchema = this.getUISchema.bind(this)
     }
 
-    log(event){
-        console.log("SchemaToForm Props: ", this.props.schema)
-        console.log("SchemaToForm: ",event)
+    trackChange(event){
+        // console.log("SchemaToForm Props: ", this.props.schema)
+        this.setState({
+            formData:event.formData
+        })
+        console.log("SchemaToForm: ", this.state.formData)
+        // console.log("SchemaToForm: ", this.props.key)
+        // this.AppService.sendInput(this.props.key, event.formData)
     }
+
+    sendInput(key) {
+        console.log("Key: ",key)
+        console.log("Sent to server: ", this.state.formData)
+        this.AppService.sendInput(key, this.state.formData)
+    }
+
+    resetInput() {
+        console.log("cancel click",this.state)
+        this.setState({
+            formData: {},
+            key: Date.now()
+        })
+    }
+
+    loadInput() {
+        console.log("load click",this.state)
+        this.setState({
+            formData: this.state.loadFormData,
+            key: Date.now()
+        })
+    }
+
+
 
     render() {
+        let self = this;
         return(
             <div className="container-fluid">
-                <Form schema={this.props.schema}
-                      onChange={this.log.bind(this)}
-                      onSubmit={this.log.bind(this)}
-                      onError={this.log.bind(this)}/>
-                {/*<button type="button" className="btn btn-primary">Process</button>*/}
-                {/*<button type="button" className="btn btn-success">Load Example</button>*/}
-                {/*<button type="button" className="btn btn-danger">Reset</button>*/}
+                <Form schema={self.props.schema}
+                      uiSchema={self.props.uiSchema}
+                      formData={self.props.formData}
+                      onChange={this.trackChange}
+                      // onChange={this.sendInput()}
+                      // onSubmit={(data)=>console.log(data.formData)}
+                      // onError={this.sendInput.bind(this)}
+                      children={' '}
+                >
+                    {/*<div>*/}
+                    {/*    <button type="submit">Submit</button>*/}
+                    {/*    <button type="button">Cancel</button>*/}
+                    {/*</div>*/}
+                    {/*<button type="submit" className="btn btn-primary">Process</button>*/}
+                </Form>
+                {/*<button type="submit" className="btn btn-primary" onClick={() => this.sendInput(this.props.schema.id)}>Process</button>*/}
+                {/*/!*<button type="button" className="btn btn-success">Load Example</button>*!/*/}
+                {/*<button type="button" className="btn btn-danger" onClick={self.resetInput}>Reset</button>*/}
+                {/*<button type="button" className="btn btn-success" onClick={self.loadInput}>Load</button>*/}
             </div>
 
         )

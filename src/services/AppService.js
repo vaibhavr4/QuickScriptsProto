@@ -33,5 +33,18 @@ class AppService {
             });
     }
 
+    sendInput(scriptId, formData) {
+        return fetch(SCRIPT_API_URL + '/'+scriptId,{
+            body: JSON.stringify(formData),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            method:'POST'
+        }).then(function(response){
+            console.log("App service server response: ", response)
+            return response.json();
+        })
+    }
+
 }
 export default AppService;
